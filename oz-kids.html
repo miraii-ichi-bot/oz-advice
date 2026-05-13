@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OZ — みんなのアドバイス</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --oz-bg:#04080f;
+  --oz-grid:#0a1628;
+  --oz-blue:#1a4fff;
+  --oz-cyan:#00d4ff;
+  --oz-pink:#ff2d78;
+  --oz-gold:#ffd700;
+  --oz-white:#eef4ff;
+  --oz-muted:#4a6fa5;
+  --radius:16px;
+}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Zen Maru Gothic',sans-serif;background:var(--oz-bg);color:var(--oz-white)}
+
+/* === GRID BACKGROUND === */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(26,79,255,0.08) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(26,79,255,0.08) 1px,transparent 1px);
+  background-size:40px 40px;
+  animation:gridShift 20s linear infinite;
+  pointer-events:none;z-index:0;
+}
+@keyframes gridShift{from{background-position:0 0}to{background-position:40px 40px}}
+
+/* === STARS === */
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--dur,3s) ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:var(--op1,.3);transform:scale(1)}50%{opacity:var(--op2,1);transform:scale(1.3)}}
+
+/* === FLOATING BUBBLES CANVAS === */
+#bubbleCanvas{position:fixed;inset:0;z-index:1;pointer-events:none}
+
+/* === CENTER UI === */
+#centerUI{
+  position:fixed;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  z-index:10;
+  width:340px;
+  opacity:0;animation:fadeUp .8s .3s forwards;
+}
+@keyframes fadeUp{from{opacity:0;transform:translate(-50%,-44%)}to{opacity:1;transform:translate(-50%,-50%)}}
+
+.oz-card{
+  background:rgba(10,22,40,0.85);
+  border:1px solid rgba(0,212,255,.25);
+  border-radius:24px;
+  padding:28px 24px 24px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 0 40px rgba(0,212,255,.1),0 0 80px rgba(26,79,255,.1);
+}
+
+.topic-label{
+  font-size:11px;letter-spacing:3px;color:var(--oz-cyan);
+  text-transform:uppercase;text-align:center;margin-bottom:12px;
+  opacity:.7;
+}
+
+#topicText{
+  font-size:22px;font-weight:900;text-align:center;
+  color:var(--oz-white);line-height:1.4;
+  min-height:60px;
+  text-shadow:0 0 20px rgba(0,212,255,.4);
+}
+
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.3),transparent);margin:20px 0}
+
+.input-row{display:flex;gap:8px;align-items:stretch}
+#commentInput{
+  flex:1;background:rgba(255,255,255,.05);
+  border:1px solid rgba(0,212,255,.2);
+  border-radius:12px;padding:10px 14px;
+  color:var(--oz-white);font-family:'Zen Maru Gothic',sans-serif;
+  font-size:14px;resize:none;outline:none;
+  transition:border-color .2s;
+}
+#commentInput::placeholder{color:var(--oz-muted)}
+#commentInput:focus{border-color:rgba(0,212,255,.6)}
+#sendBtn{
+  width:44px;border:none;border-radius:12px;cursor:pointer;
+  background:linear-gradient(135deg,var(--oz-blue),var(--oz-cyan));
+  color:#fff;font-size:20px;
+  transition:transform .15s,box-shadow .15s;
+  flex-shrink:0;
+}
+#sendBtn:hover{transform:scale(1.08);box-shadow:0 0 16px rgba(0,212,255,.5)}
+#sendBtn:active{transform:scale(.96)}
+#sendBtn:disabled{opacity:.4;cursor:default;transform:none}
+
+.char-hint{font-size:11px;color:var(--oz-muted);text-align:right;margin-top:4px}
+
+/* === AVATAR MODAL === */
+#avatarModal{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(4,8,15,.8);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+#avatarModal.open{display:flex}
+.avatar-box{
+  background:rgba(10,22,40,.95);border:1px solid rgba(0,212,255,.3);
+  border-radius:24px;padding:32px;max-width:360px;width:90%;
+  animation:fadeUp .4s both;
+}
+.avatar-box h2{font-size:18px;text-align:center;margin-bottom:8px;color:var(--oz-cyan)}
+.avatar-box p{font-size:13px;color:var(--oz-muted);text-align:center;margin-bottom:24px}
+.avatar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.av-choice{
+  border:2px solid transparent;border-radius:16px;
+  cursor:pointer;overflow:hidden;aspect-ratio:1;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.04);
+  transition:border-color .2s,transform .15s;
+}
+.av-choice:hover{transform:scale(1.06)}
+.av-choice.selected{border-color:var(--oz-cyan);box-shadow:0 0 12px rgba(0,212,255,.4)}
+.av-choice img{width:80%;height:80%;object-fit:contain}
+.av-choice .av-emoji{font-size:36px}
+#confirmAvatar{
+  display:block;margin:24px auto 0;
+  padding:10px 32px;border:none;border-radius:99px;cursor:pointer;
+  background:linear-gradient(135deg,var(--oz-blue),var(--oz-cyan));
+  color:#fff;font-family:'Zen Maru Gothic',sans-serif;font-size:15px;font-weight:700;
+}
+
+/* === MENU === */
+#menuBtn{
+  position:fixed;top:20px;right:20px;z-index:50;
+  width:44px;height:44px;border:1px solid rgba(0,212,255,.3);
+  border-radius:12px;background:rgba(10,22,40,.8);
+  cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;
+  backdrop-filter:blur(8px);transition:border-color .2s;
+}
+#menuBtn:hover{border-color:rgba(0,212,255,.7)}
+.bar{width:18px;height:2px;background:var(--oz-cyan);border-radius:99px;transition:.3s}
+#menuBtn.open .bar:nth-child(1){transform:translateY(7px) rotate(45deg)}
+#menuBtn.open .bar:nth-child(2){opacity:0}
+#menuBtn.open .bar:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+#sideMenu{
+  position:fixed;top:0;right:-300px;width:280px;height:100%;z-index:40;
+  background:rgba(4,8,15,.95);border-left:1px solid rgba(0,212,255,.15);
+  backdrop-filter:blur(20px);padding:80px 24px 32px;
+  transition:right .3s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;
+}
+#sideMenu.open{right:0}
+#sideMenu h3{font-size:11px;letter-spacing:3px;color:var(--oz-cyan);opacity:.7;margin-bottom:16px;text-transform:uppercase}
+.past-item{
+  padding:12px 16px;border-radius:12px;border:1px solid rgba(0,212,255,.1);
+  margin-bottom:8px;cursor:pointer;
+  transition:background .2s,border-color .2s;font-size:14px;
+}
+.past-item:hover{background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3)}
+.past-item.active{background:rgba(26,79,255,.15);border-color:var(--oz-blue);color:var(--oz-cyan)}
+.past-date{font-size:11px;color:var(--oz-muted);margin-top:4px}
+
+/* === MY AVATAR indicator === */
+#myAvatarBtn{
+  position:fixed;top:20px;left:20px;z-index:50;
+  width:44px;height:44px;border:1px solid rgba(0,212,255,.3);
+  border-radius:12px;background:rgba(10,22,40,.8);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);font-size:24px;
+  transition:border-color .2s;
+}
+#myAvatarBtn:hover{border-color:rgba(0,212,255,.7)}
+
+/* === TOAST === */
+#toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.4);
+  border-radius:99px;padding:10px 24px;font-size:13px;
+  color:var(--oz-cyan);z-index:200;opacity:0;
+  transition:opacity .3s,transform .3s;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* === COUNT badge === */
+#countBadge{
+  position:fixed;top:50%;left:24px;transform:translateY(-50%);z-index:10;
+  opacity:0;transition:opacity 1s 1s;
+}
+#countBadge.visible{opacity:1}
+.count-inner{
+  font-size:11px;color:var(--oz-muted);letter-spacing:2px;text-transform:uppercase;
+  writing-mode:vertical-rl;text-orientation:mixed;
+}
+.count-num{font-size:28px;font-weight:900;color:var(--oz-cyan);text-shadow:0 0 10px rgba(0,212,255,.5);display:block;text-align:center;margin-bottom:4px}
+
+/* === NO TOPIC === */
+#noTopic{font-size:14px;color:var(--oz-muted);text-align:center;line-height:1.7}
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<canvas id="bubbleCanvas"></canvas>
+
+<!-- My avatar btn -->
+<button id="myAvatarBtn" onclick="openAvatarModal()" title="アバターを変える">🌟</button>
+
+<!-- Menu -->
+<button id="menuBtn" onclick="toggleMenu()">
+  <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+</button>
+<nav id="sideMenu">
+  <h3>📜 過去のお題</h3>
+  <div id="pastList"></div>
+</nav>
+
+<!-- Center -->
+<div id="centerUI">
+  <div class="oz-card">
+    <div class="topic-label">⚡ TODAY'S TOPIC</div>
+    <div id="topicText"><span id="noTopic" style="display:none">まだお題がないよ！<br>管理画面からお題を追加しよう</span></div>
+    <div class="divider"></div>
+    <div class="input-row">
+      <textarea id="commentInput" rows="2" placeholder="アドバイスを入力してね…" maxlength="80"></textarea>
+      <button id="sendBtn" onclick="submitComment()" title="送信">➤</button>
+    </div>
+    <div class="char-hint"><span id="charCount">0</span>/80</div>
+  </div>
+</div>
+
+<!-- Comment count -->
+<div id="countBadge">
+  <div class="count-inner">
+    <span class="count-num" id="countNum">0</span>
+    COMMENTS
+  </div>
+</div>
+
+<!-- Avatar modal -->
+<div id="avatarModal">
+  <div class="avatar-box">
+    <h2>⭐ アバターを選んでね</h2>
+    <p>このアバターがコメントに表示されるよ！</p>
+    <div class="avatar-grid" id="avatarGrid"></div>
+    <button id="confirmAvatar" onclick="confirmAvatarChoice()">決定！</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===== STORAGE HELPERS =====
+// window.storage (Claude artifact storage) を優先し、使えなければ localStorage にフォールバック
+const SHARED = true;
+const PERSONAL = false;
+
+function lsKey(key, shared){ return (shared ? 'oz_shared_' : 'oz_personal_') + key; }
+
+async function sget(key, shared=false){
+  // 1) window.storage を試みる
+  if(window.storage){
+    try{
+      const r = await window.storage.get(key, shared);
+      return r ? JSON.parse(r.value) : null;
+    } catch(e){ console.warn('[storage] sget failed, fallback to localStorage', e); }
+  }
+  // 2) localStorage フォールバック
+  try{
+    const raw = localStorage.getItem(lsKey(key, shared));
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){ console.error('[storage] localStorage sget failed', e); return null; }
+}
+
+async function sset(key, val, shared=false){
+  const json = JSON.stringify(val);
+  // 1) window.storage を試みる
+  if(window.storage){
+    try{
+      await window.storage.set(key, json, shared);
+      return; // 成功したらここで終了
+    } catch(e){ console.warn('[storage] sset failed, fallback to localStorage', e); }
+  }
+  // 2) localStorage フォールバック
+  try{
+    localStorage.setItem(lsKey(key, shared), json);
+  } catch(e){ console.error('[storage] localStorage sset failed', e); }
+}
+
+// ===== STARS =====
+(function(){
+  const sf=document.getElementById('starfield');
+  for(let i=0;i<120;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*2.5+.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--op1:${.1+Math.random()*.3};--op2:${.6+Math.random()*.4};animation-delay:${Math.random()*4}s`;
+    sf.appendChild(s);
+  }
+})();
+
+// ===== BUBBLE CANVAS =====
+const canvas=document.getElementById('bubbleCanvas');
+const ctx=canvas.getContext('2d');
+let bubbles=[];
+let W,H;
+
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight}
+resize();
+window.addEventListener('resize',resize);
+
+const AVATARS_DEFAULT=['🌟','🌊','🔥','🌿','⚡','🎮'];
+let avatarList=AVATARS_DEFAULT;
+let myAvatar='🌟';
+let pendingAvatar='🌟';
+let currentTopicId=null;
+let allComments=[];
+let selectedAvatarIdx=0;
+
+class Bubble{
+  constructor(data){
+    this.text=data.text||'';
+    this.avatar=data.avatar||'🌟';
+    this.id=data.id;
+    this.x=data.x||(Math.random()*W);
+    this.y=data.y||(Math.random()*H);
+    this.vx=(Math.random()-.5)*.3;
+    this.vy=(Math.random()-.5)*.3;
+    this.phase=Math.random()*Math.PI*2;
+    this.amp=3+Math.random()*5;
+    this.freq=.002+Math.random()*.003;
+    this.alpha=0;
+    this.targetAlpha=1;
+    this.w=0;
+    this.h=0;
+    this.padding={x:14,y:10};
+    this.fontSize=13;
+    this.avatarSize=28;
+  }
+  update(t){
+    this.alpha+=(this.targetAlpha-this.alpha)*.04;
+    this.x+=this.vx;
+    this.y+=this.vy+Math.sin(t*this.freq+this.phase)*this.amp*.02;
+    // bounce
+    const pad=80;
+    if(this.x<pad||this.x>W-pad) this.vx*=-1;
+    if(this.y<pad||this.y>H-pad) this.vy*=-1;
+    this.x=Math.max(pad,Math.min(W-pad,this.x));
+    this.y=Math.max(pad,Math.min(H-pad,this.y));
+    // avoid center
+    const cx=W/2,cy=H/2,zoneR=230;
+    const dx=this.x-cx,dy=this.y-cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<zoneR){const push=(zoneR-dist)/zoneR;this.x+=dx/dist*push*2.5;this.y+=dy/dist*push*2.5;}
+  }
+  draw(t){
+    if(this.alpha<.01) return;
+    ctx.save();
+    ctx.globalAlpha=this.alpha;
+    ctx.font=`${this.fontSize}px 'Zen Maru Gothic',sans-serif`;
+    const lines=wrapText(this.text,120);
+    const tw=lines.reduce((m,l)=>Math.max(m,ctx.measureText(l).width),0);
+    const lh=18;
+    const textH=lines.length*lh;
+    this.w=Math.max(tw,this.avatarSize)+this.padding.x*2+4;
+    this.h=textH+this.avatarSize+this.padding.y*2+8;
+    const x=this.x-this.w/2,y=this.y-this.h/2;
+    const r=14;
+    // glow
+    ctx.shadowColor='rgba(0,212,255,.3)';ctx.shadowBlur=16;
+    // bubble bg
+    ctx.fillStyle='rgba(10,22,40,.88)';
+    roundRect(ctx,x,y,this.w,this.h,r);ctx.fill();
+    ctx.shadowBlur=0;
+    // border
+    ctx.strokeStyle='rgba(0,212,255,.35)';ctx.lineWidth=1;
+    roundRect(ctx,x,y,this.w,this.h,r);ctx.stroke();
+    // tail
+    ctx.beginPath();
+    ctx.moveTo(this.x-6,y+this.h-1);
+    ctx.lineTo(this.x,y+this.h+8);
+    ctx.lineTo(this.x+6,y+this.h-1);
+    ctx.fillStyle='rgba(10,22,40,.88)';ctx.fill();
+    ctx.strokeStyle='rgba(0,212,255,.35)';ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(this.x-6,y+this.h);
+    ctx.lineTo(this.x,y+this.h+9);
+    ctx.lineTo(this.x+6,y+this.h);
+    ctx.stroke();
+    // avatar
+    const ax=this.x,ay=y+this.padding.y+this.avatarSize/2;
+    ctx.font=`${this.avatarSize}px serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(this.avatar,ax,ay+this.avatarSize/2+textH+4);
+    // text
+    ctx.font=`${this.fontSize}px 'Zen Maru Gothic',sans-serif`;
+    ctx.fillStyle='#eef4ff';ctx.textAlign='center';ctx.textBaseline='top';
+    lines.forEach((l,i)=>ctx.fillText(l,this.x,y+this.padding.y+i*lh));
+    ctx.restore();
+  }
+}
+
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);
+  c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();
+}
+function wrapText(text,maxW){
+  // split at newline or max chars
+  const words=text.split('');
+  const lines=[];let cur='';
+  for(const ch of words){
+    const test=cur+ch;
+    if(ctx.measureText(test).width>maxW){lines.push(cur);cur=ch;}
+    else cur=test;
+  }
+  if(cur) lines.push(cur);
+  return lines.slice(0,3);
+}
+
+let t=0;
+function animate(){
+  ctx.clearRect(0,0,W,H);
+  t++;
+  bubbles.forEach(b=>{b.update(t);b.draw(t);});
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ===== DATA LOADING =====
+let pollTimer=null;
+let lastHash='';
+
+async function loadAll(){
+  const data=await sget('oz_data',SHARED)||{topics:[],comments:[],avatars:null};
+  avatarList=data.avatars||AVATARS_DEFAULT;
+  const topics=(data.topics||[]).filter(t=>t.active);
+  if(!topics.length){
+    document.getElementById('topicText').innerHTML='';
+    document.getElementById('noTopic').style.display='block';
+    document.getElementById('topicText').appendChild(document.getElementById('noTopic'));
+    document.getElementById('commentInput').disabled=true;
+    document.getElementById('sendBtn').disabled=true;
+    buildBubbles([]);
+    renderPastMenu(data.topics||[]);
+    return;
+  }
+  document.getElementById('commentInput').disabled=false;
+  document.getElementById('sendBtn').disabled=false;
+  // newest active topic
+  const topic=topics[topics.length-1];
+  if(topic.id!==currentTopicId){
+    currentTopicId=topic.id;
+    animateTopicIn(topic.text);
+  }
+  renderPastMenu(data.topics||[]);
+  // approved comments for this topic
+  const approved=(data.comments||[]).filter(c=>c.topicId===currentTopicId&&c.approved);
+  const h=JSON.stringify(approved);
+  if(h!==lastHash){lastHash=h;buildBubbles(approved);}
+  allComments=approved;
+  document.getElementById('countNum').textContent=approved.length;
+  if(approved.length>0) document.getElementById('countBadge').classList.add('visible');
+}
+
+function animateTopicIn(text){
+  const el=document.getElementById('topicText');
+  el.style.opacity='0';
+  document.getElementById('noTopic').style.display='none';
+  setTimeout(()=>{el.textContent=text;el.style.transition='opacity .6s';el.style.opacity='1';},300);
+}
+
+function buildBubbles(comments){
+  // keep existing positions if id matches
+  const existing=new Map(bubbles.map(b=>[b.id,b]));
+  const newIds=new Set(comments.map(c=>c.id));
+  // remove gone
+  bubbles=bubbles.filter(b=>newIds.has(b.id));
+  // add new
+  comments.forEach(c=>{
+    if(!existing.has(c.id)){
+      bubbles.push(new Bubble({...c,x:undefined,y:undefined}));
+    }
+  });
+}
+
+function renderPastMenu(topics){
+  const list=document.getElementById('pastList');
+  list.innerHTML='';
+  const past=[...topics].reverse();
+  past.forEach(t=>{
+    const div=document.createElement('div');
+    div.className='past-item'+(t.id===currentTopicId?' active':'');
+    div.innerHTML=`<div>${t.text}</div><div class="past-date">${new Date(t.createdAt).toLocaleDateString('ja-JP')}</div>`;
+    div.onclick=()=>showPastTopic(t);
+    list.appendChild(div);
+  });
+}
+
+function showPastTopic(t){
+  animateTopicIn(t.text);
+  currentTopicId=t.id;
+  toggleMenu();
+  loadAll();
+}
+
+// ===== COMMENT SUBMIT =====
+async function submitComment(){
+  const inp=document.getElementById('commentInput');
+  const text=inp.value.trim();
+  if(!text||!currentTopicId) return;
+  document.getElementById('sendBtn').disabled=true;
+  const stored=await sget('oz_data',SHARED)||{topics:[],comments:[],avatars:null};
+  const comment={
+    id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+    topicId:currentTopicId,
+    text,
+    avatar:myAvatar,
+    approved:false,
+    createdAt:new Date().toISOString()
+  };
+  stored.comments=[...(stored.comments||[]),comment];
+  await sset('oz_data',stored,SHARED);
+  inp.value='';
+  document.getElementById('charCount').textContent='0';
+  document.getElementById('sendBtn').disabled=false;
+  showToast('アドバイスを送ったよ！承認されたら表示されるよ✨');
+}
+
+// ===== AVATAR =====
+function openAvatarModal(){
+  buildAvatarGrid();
+  document.getElementById('avatarModal').classList.add('open');
+}
+function buildAvatarGrid(){
+  const grid=document.getElementById('avatarGrid');
+  grid.innerHTML='';
+  avatarList.forEach((av,i)=>{
+    const div=document.createElement('div');
+    div.className='av-choice'+(av===myAvatar?' selected':'');
+    // check if URL or emoji
+    if(av.startsWith('http')||av.startsWith('/')){
+      div.innerHTML=`<img src="${av}" alt="avatar ${i+1}">`;
+    } else {
+      div.innerHTML=`<span class="av-emoji">${av}</span>`;
+    }
+    div.onclick=()=>{
+      pendingAvatar=av;
+      grid.querySelectorAll('.av-choice').forEach(el=>el.classList.remove('selected'));
+      div.classList.add('selected');
+    };
+    grid.appendChild(div);
+  });
+  pendingAvatar=myAvatar;
+}
+function confirmAvatarChoice(){
+  myAvatar=pendingAvatar;
+  document.getElementById('myAvatarBtn').textContent=myAvatar.startsWith('http')?'🎭':myAvatar;
+  sset('oz_myavatar',myAvatar,PERSONAL);
+  document.getElementById('avatarModal').classList.remove('open');
+  showToast('アバターを設定したよ！');
+}
+
+// ===== MENU =====
+function toggleMenu(){
+  document.getElementById('menuBtn').classList.toggle('open');
+  document.getElementById('sideMenu').classList.toggle('open');
+}
+
+// ===== CHAR COUNT =====
+document.getElementById('commentInput').addEventListener('input',function(){
+  document.getElementById('charCount').textContent=this.value.length;
+});
+document.getElementById('commentInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitComment();}
+});
+
+// ===== TOAST =====
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ===== INIT =====
+async function init(){
+  const savedAv=await sget('oz_myavatar',PERSONAL);
+  if(savedAv) myAvatar=savedAv;
+  document.getElementById('myAvatarBtn').textContent=myAvatar.startsWith('http')?'🎭':myAvatar;
+  await loadAll();
+  pollTimer=setInterval(loadAll,5000);
+}
+init();
+</script>
+</body>
+</html>

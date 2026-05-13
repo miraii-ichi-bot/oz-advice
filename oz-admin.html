@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OZ 管理画面</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f1117;
+  --surface:#161b27;
+  --surface2:#1e2536;
+  --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);
+  --blue:#2563eb;
+  --blue-light:rgba(37,99,235,.15);
+  --cyan:#00bcd4;
+  --green:#10b981;
+  --green-light:rgba(16,185,129,.12);
+  --red:#ef4444;
+  --red-light:rgba(239,68,68,.12);
+  --amber:#f59e0b;
+  --amber-light:rgba(245,158,11,.12);
+  --text:#e8ecf4;
+  --text2:#8892a4;
+  --text3:#5a6478;
+  --radius:10px;
+  --radius-lg:14px;
+}
+html,body{height:100%;font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+/* layout */
+#layout{display:flex;height:100%}
+#sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0 0 20px}
+#main{flex:1;overflow-y:auto;padding:32px}
+/* sidebar */
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+.logo-mark{font-size:22px;font-weight:700;letter-spacing:2px;color:var(--cyan)}
+.logo-sub{font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-top:2px}
+.nav-section{font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;padding:20px 20px 8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--text2);transition:background .15s,color .15s;border-radius:0}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav-item.active{background:rgba(37,99,235,.15);color:var(--blue);font-weight:500}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;min-width:20px;text-align:center}
+/* pages */
+.page{display:none}
+.page.active{display:block}
+/* page header */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-size:20px;font-weight:700;color:var(--text)}
+.page-sub{font-size:13px;color:var(--text2);margin-top:2px}
+/* cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.5px;margin-bottom:16px;text-transform:uppercase;letter-spacing:1.5px;font-size:11px}
+/* form */
+.form-label{font-size:12px;color:var(--text2);margin-bottom:6px;display:block}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:rgba(37,99,235,.6)}
+.form-input::placeholder{color:var(--text3)}
+textarea.form-input{resize:vertical;min-height:80px}
+/* buttons */
+.btn{padding:9px 20px;border:none;border-radius:var(--radius);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:500;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{opacity:.88}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{opacity:.88}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{opacity:.88}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-sm{padding:5px 14px;font-size:12px}
+/* tabs */
+.tab-bar{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:20px;width:fit-content}
+.tab{padding:7px 18px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text2);transition:.15s}
+.tab.active{background:var(--blue);color:#fff;font-weight:500}
+/* topic list */
+.topic-row{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);margin-bottom:8px}
+.topic-row.inactive{opacity:.5}
+.topic-text{flex:1;font-size:14px}
+.topic-meta{font-size:11px;color:var(--text3);margin-top:3px}
+.status-pill{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;flex-shrink:0}
+.pill-active{background:var(--green-light);color:var(--green)}
+.pill-inactive{background:rgba(255,255,255,.06);color:var(--text3)}
+/* comment list */
+.comment-row{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+.comment-head{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--surface2)}
+.comment-avatar{font-size:28px;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
+.comment-body{flex:1}
+.comment-text{font-size:14px;line-height:1.6}
+.comment-meta{font-size:11px;color:var(--text3);margin-top:4px}
+.comment-topic{font-size:11px;color:var(--cyan);margin-top:2px}
+.comment-actions{display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--border)}
+.status-approved{background:var(--green-light);color:var(--green);padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700}
+.status-pending{background:var(--amber-light);color:var(--amber);padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700}
+.status-rejected{background:var(--red-light);color:var(--red);padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700}
+/* filter bar */
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:5px 14px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:.15s}
+.filter-btn:hover,.filter-btn.active{background:var(--blue-light);border-color:var(--blue);color:var(--cyan)}
+/* avatars */
+.avatar-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:8px}
+.avatar-slot{aspect-ratio:1;border:1px solid var(--border2);border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.avatar-slot .av-content{font-size:32px}
+.avatar-slot img{width:80%;height:80%;object-fit:contain}
+.av-remove{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.av-add{aspect-ratio:1;border:1px dashed var(--border2);border-radius:12px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);font-size:12px;gap:6px;transition:.2s}
+.av-add:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-light)}
+.av-add .plus{font-size:22px}
+/* stats */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.stat-num{font-size:28px;font-weight:700;color:var(--text)}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
+/* live dot */
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.4)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
+/* toast */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 20px;font-size:13px;color:var(--text);z-index:200;opacity:0;transform:translateY(8px);transition:.3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+/* empty state */
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:14px}
+.empty .emoji{font-size:32px;margin-bottom:12px}
+/* scrollbar */
+::-webkit-scrollbar{width:6px;background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px}
+/* modal */
+.modal-bg{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px;width:380px;max-width:90vw}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+/* url input */
+.url-row{display:flex;gap:8px;margin-top:8px}
+.url-row input{flex:1}
+</style>
+</head>
+<body>
+<div id="layout">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">⚡ OZ</div>
+      <div class="logo-sub">管理コンソール</div>
+    </div>
+    <div class="nav-section">メニュー</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span>ダッシュボード</div>
+    <div class="nav-item" onclick="showPage('topics')"><span class="icon">💬</span>お題管理</div>
+    <div class="nav-item" onclick="showPage('comments')"><span class="icon">✅</span>コメント承認<span class="badge" id="pendingBadge">0</span></div>
+    <div class="nav-item" onclick="showPage('avatars')"><span class="icon">🎭</span>アバター設定</div>
+    <div style="margin-top:auto;padding:0 20px">
+      <div style="font-size:11px;color:var(--text3);text-align:center;line-height:1.7">
+        <span class="live-dot"></span>自動同期中<br>
+        <span id="lastSync">--</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">ダッシュボード</div>
+          <div class="page-sub">OZのコメント状況をひと目で確認できます</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="s-topics">0</div><div class="stat-lbl">📌 総お題数</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-comments">0</div><div class="stat-lbl">💬 総コメント</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-pending" style="color:var(--amber)">0</div><div class="stat-lbl">⏳ 承認待ち</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-approved" style="color:var(--green)">0</div><div class="stat-lbl">✅ 承認済み</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">現在のお題</div>
+        <div id="currentTopicDisplay" style="font-size:18px;font-weight:700;line-height:1.5">—</div>
+      </div>
+      <div class="card">
+        <div class="card-title">最近のコメント（承認待ち）</div>
+        <div id="recentPending"></div>
+      </div>
+    </div>
+
+    <!-- TOPICS -->
+    <div class="page" id="page-topics">
+      <div class="page-header">
+        <div><div class="page-title">お題管理</div><div class="page-sub">お題を投稿・管理します</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">新しいお題を追加</div>
+        <label class="form-label">お題テキスト</label>
+        <textarea id="newTopicText" class="form-input" placeholder="例：困っているお友達に、どんな言葉をかけてあげますか？" rows="3"></textarea>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-primary" onclick="addTopic()">✚ お題を追加して公開</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">お題一覧</div>
+        <div id="topicList"></div>
+      </div>
+    </div>
+
+    <!-- COMMENTS -->
+    <div class="page" id="page-comments">
+      <div class="page-header">
+        <div><div class="page-title">コメント管理</div><div class="page-sub">こどもたちのコメントを承認・拒否します</div></div>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setCommentFilter('pending',this)">⏳ 承認待ち</button>
+        <button class="filter-btn" onclick="setCommentFilter('approved',this)">✅ 承認済み</button>
+        <button class="filter-btn" onclick="setCommentFilter('rejected',this)">❌ 拒否</button>
+        <button class="filter-btn" onclick="setCommentFilter('all',this)">すべて</button>
+      </div>
+      <div id="commentList"></div>
+    </div>
+
+    <!-- AVATARS -->
+    <div class="page" id="page-avatars">
+      <div class="page-header">
+        <div><div class="page-title">アバター設定</div><div class="page-sub">子どもたちが選べるアバターを設定します（最大6つ）</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">アバター一覧（絵文字またはURL）</div>
+        <div class="avatar-grid" id="avatarGrid"></div>
+        <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-primary" onclick="saveAvatars()">保存して反映</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">絵文字で追加</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">絵文字を入力して追加できます（例：🦊 🌈 🚀）</p>
+        <div class="url-row">
+          <input type="text" id="emojiInput" class="form-input" placeholder="🌟">
+          <button class="btn btn-ghost" onclick="addEmojiAvatar()">追加</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">画像URLで追加</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">画像のURLを入力して追加できます（.png, .svg など）</p>
+        <div class="url-row">
+          <input type="url" id="urlInput" class="form-input" placeholder="https://example.com/avatar.png">
+          <button class="btn btn-ghost" onclick="addUrlAvatar()">追加</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Confirm delete modal -->
+<div class="modal-bg" id="deleteModal">
+  <div class="modal">
+    <h3>🗑 削除の確認</h3>
+    <p id="deleteModalMsg">このお題を削除しますか？<br>関連するコメントはすべて非表示になります。</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeDeleteModal()">キャンセル</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===== STORAGE =====
+const SHARED=true,PERSONAL=false;
+
+function lsKey(key,shared){return(shared?'oz_shared_':'oz_personal_')+key;}
+
+async function sget(key,shared=false){
+  if(window.storage){
+    try{const r=await window.storage.get(key,shared);return r?JSON.parse(r.value):null;}
+    catch(e){console.warn('[storage] sget failed, fallback',e);}
+  }
+  try{const raw=localStorage.getItem(lsKey(key,shared));return raw?JSON.parse(raw):null;}
+  catch(e){console.error('[storage] localStorage sget failed',e);return null;}
+}
+
+async function sset(key,val,shared=false){
+  const json=JSON.stringify(val);
+  if(window.storage){
+    try{await window.storage.set(key,json,shared);return;}
+    catch(e){console.warn('[storage] sset failed, fallback',e);}
+  }
+  try{localStorage.setItem(lsKey(key,shared),json);}
+  catch(e){console.error('[storage] localStorage sset failed',e);}
+}
+
+// ===== STATE =====
+let data={topics:[],comments:[],avatars:null};
+let commentFilter='pending';
+let deleteTarget=null;
+let deleteType=null;
+let pollTimer=null;
+
+// ===== NAVIGATION =====
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ===== DATA LOAD/SAVE =====
+async function loadData(){
+  const d=await sget('oz_data',SHARED);
+  if(d){data=d;if(!data.avatars)data.avatars=['🌟','🌊','🔥','🌿','⚡','🎮'];}
+  else{data={topics:[],comments:[],avatars:['🌟','🌊','🔥','🌿','⚡','🎮']}}
+  renderAll();
+  updateLastSync();
+}
+async function saveData(){
+  await sset('oz_data',data,SHARED);
+  renderAll();
+  updateLastSync();
+}
+function updateLastSync(){
+  const now=new Date();
+  document.getElementById('lastSync').textContent=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')} 更新`;
+}
+
+function renderAll(){
+  renderStats();
+  renderDashboard();
+  renderTopicList();
+  renderCommentList();
+  renderAvatarGrid();
+  updatePendingBadge();
+}
+
+// ===== STATS =====
+function renderStats(){
+  const topics=data.topics||[];
+  const comments=data.comments||[];
+  document.getElementById('s-topics').textContent=topics.length;
+  document.getElementById('s-comments').textContent=comments.length;
+  const pending=comments.filter(c=>!c.approved&&!c.rejected);
+  document.getElementById('s-pending').textContent=pending.length;
+  document.getElementById('s-approved').textContent=comments.filter(c=>c.approved).length;
+}
+function updatePendingBadge(){
+  const n=(data.comments||[]).filter(c=>!c.approved&&!c.rejected).length;
+  document.getElementById('pendingBadge').textContent=n;
+  document.getElementById('pendingBadge').style.display=n?'':'none';
+}
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  const active=(data.topics||[]).filter(t=>t.active);
+  const cur=active.length?active[active.length-1]:null;
+  document.getElementById('currentTopicDisplay').textContent=cur?cur.text:'（現在のお題はありません）';
+  const pending=(data.comments||[]).filter(c=>!c.approved&&!c.rejected).slice(0,5);
+  const el=document.getElementById('recentPending');
+  if(!pending.length){el.innerHTML='<div class="empty"><div class="emoji">🎉</div>承認待ちのコメントはありません</div>';return;}
+  el.innerHTML=pending.map(c=>`
+    <div class="comment-row" style="margin-bottom:10px">
+      <div class="comment-head">
+        <div class="comment-avatar">${c.avatar&&!c.avatar.startsWith('http')?c.avatar:'🌟'}</div>
+        <div class="comment-body">
+          <div class="comment-text">${esc(c.text)}</div>
+          <div class="comment-meta">${fmtDate(c.createdAt)}</div>
+        </div>
+      </div>
+      <div class="comment-actions">
+        <button class="btn btn-success btn-sm" onclick="approveComment('${c.id}')">✅ 承認</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectComment('${c.id}')">❌ 拒否</button>
+      </div>
+    </div>`).join('');
+}
+
+// ===== TOPICS =====
+async function addTopic(){
+  const text=document.getElementById('newTopicText').value.trim();
+  if(!text){showToast('お題テキストを入力してください','warn');return;}
+  (data.topics||[]).forEach(t=>t.active=false);
+  data.topics=[...(data.topics||[]),{
+    id:'t_'+Date.now(),text,active:true,
+    createdAt:new Date().toISOString()
+  }];
+  document.getElementById('newTopicText').value='';
+  await saveData();
+  showToast('お題を公開しました！');
+}
+async function setTopicActive(id){
+  (data.topics||[]).forEach(t=>t.active=t.id===id);
+  await saveData();showToast('お題を切り替えました');
+}
+function promptDeleteTopic(id){
+  deleteTarget=id;deleteType='topic';
+  document.getElementById('deleteModalMsg').textContent='このお題を削除しますか？関連するコメントはすべて削除されます。';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal(){document.getElementById('deleteModal').classList.remove('open');deleteTarget=null;deleteType=null;}
+async function confirmDelete(){
+  if(deleteType==='topic'){
+    data.topics=(data.topics||[]).filter(t=>t.id!==deleteTarget);
+    data.comments=(data.comments||[]).filter(c=>c.topicId!==deleteTarget);
+  } else if(deleteType==='comment'){
+    data.comments=(data.comments||[]).filter(c=>c.id!==deleteTarget);
+  }
+  closeDeleteModal();
+  await saveData();
+  showToast(deleteType==='topic'?'お題を削除しました':'コメントを削除しました');
+}
+function renderTopicList(){
+  const list=document.getElementById('topicList');
+  const topics=[...(data.topics||[])].reverse();
+  if(!topics.length){list.innerHTML='<div class="empty"><div class="emoji">💬</div>お題がまだありません</div>';return;}
+  list.innerHTML=topics.map(t=>`
+    <div class="topic-row${t.active?'':' inactive'}">
+      <div style="flex:1">
+        <div class="topic-text">${esc(t.text)}</div>
+        <div class="topic-meta">${fmtDate(t.createdAt)}</div>
+      </div>
+      <span class="status-pill ${t.active?'pill-active':'pill-inactive'}">${t.active?'🔴 公開中':'非公開'}</span>
+      ${!t.active?`<button class="btn btn-ghost btn-sm" onclick="setTopicActive('${t.id}')">公開する</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="promptDeleteTopic('${t.id}')">削除</button>
+    </div>`).join('');
+}
+
+// ===== COMMENTS =====
+let curCommentFilter='pending';
+function setCommentFilter(f,el){
+  curCommentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderCommentList();
+}
+async function approveComment(id){
+  const c=(data.comments||[]).find(c=>c.id===id);
+  if(c){c.approved=true;c.rejected=false;}
+  await saveData();showToast('コメントを承認しました ✅');
+}
+async function rejectComment(id){
+  const c=(data.comments||[]).find(c=>c.id===id);
+  if(c){c.rejected=true;c.approved=false;}
+  await saveData();showToast('コメントを拒否しました ❌');
+}
+function promptDeleteComment(id){
+  deleteTarget=id;deleteType='comment';
+  document.getElementById('deleteModalMsg').textContent='このコメントを完全に削除しますか？';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function renderCommentList(){
+  const comments=[...(data.comments||[])].reverse();
+  const topicMap=Object.fromEntries((data.topics||[]).map(t=>[t.id,t.text]));
+  let filtered;
+  if(curCommentFilter==='pending') filtered=comments.filter(c=>!c.approved&&!c.rejected);
+  else if(curCommentFilter==='approved') filtered=comments.filter(c=>c.approved);
+  else if(curCommentFilter==='rejected') filtered=comments.filter(c=>c.rejected);
+  else filtered=comments;
+  const list=document.getElementById('commentList');
+  if(!filtered.length){list.innerHTML='<div class="empty"><div class="emoji">🎉</div>該当するコメントはありません</div>';return;}
+  const statusBadge=c=>c.approved?'<span class="status-approved">承認済み</span>':c.rejected?'<span class="status-rejected">拒否</span>':'<span class="status-pending">承認待ち</span>';
+  const avatarHtml=av=>av&&av.startsWith('http')?`<img src="${av}" style="width:80%;height:80%;object-fit:contain">`:(av||'🌟');
+  list.innerHTML=filtered.map(c=>`
+    <div class="comment-row">
+      <div class="comment-head">
+        <div class="comment-avatar">${avatarHtml(c.avatar)}</div>
+        <div class="comment-body">
+          <div class="comment-text">${esc(c.text)}</div>
+          <div class="comment-meta">${fmtDate(c.createdAt)}</div>
+          <div class="comment-topic">お題：${esc(topicMap[c.topicId]||'不明')}</div>
+        </div>
+        ${statusBadge(c)}
+      </div>
+      <div class="comment-actions">
+        ${!c.approved?`<button class="btn btn-success btn-sm" onclick="approveComment('${c.id}')">✅ 承認</button>`:''}
+        ${!c.rejected?`<button class="btn btn-danger btn-sm" onclick="rejectComment('${c.id}')">❌ 拒否</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="promptDeleteComment('${c.id}')" style="margin-left:auto">🗑 削除</button>
+      </div>
+    </div>`).join('');
+}
+
+// ===== AVATARS =====
+let editAvatars=[];
+function renderAvatarGrid(){
+  editAvatars=[...(data.avatars||['🌟','🌊','🔥','🌿','⚡','🎮'])];
+  refreshAvatarUI();
+}
+function refreshAvatarUI(){
+  const grid=document.getElementById('avatarGrid');
+  grid.innerHTML='';
+  editAvatars.forEach((av,i)=>{
+    const slot=document.createElement('div');
+    slot.className='avatar-slot';
+    const isUrl=av.startsWith('http')||av.startsWith('/');
+    slot.innerHTML=`${isUrl?`<img src="${av}" alt="av">`:`<span class="av-content">${av}</span>`}
+      <button class="av-remove" onclick="removeAvatar(${i})">×</button>`;
+    grid.appendChild(slot);
+  });
+  if(editAvatars.length<6){
+    const add=document.createElement('div');
+    add.className='av-add';
+    add.innerHTML='<span class="plus">＋</span><span>追加</span>';
+    grid.appendChild(add);
+  }
+}
+function addEmojiAvatar(){
+  const v=document.getElementById('emojiInput').value.trim();
+  if(!v||editAvatars.length>=6){showToast('アバターは最大6つです','warn');return;}
+  editAvatars.push(v);
+  document.getElementById('emojiInput').value='';
+  refreshAvatarUI();
+}
+function addUrlAvatar(){
+  const v=document.getElementById('urlInput').value.trim();
+  if(!v||editAvatars.length>=6){showToast('アバターは最大6つです','warn');return;}
+  if(!v.startsWith('http')){showToast('URLはhttpまたはhttpsで始まる必要があります','warn');return;}
+  editAvatars.push(v);
+  document.getElementById('urlInput').value='';
+  refreshAvatarUI();
+}
+function removeAvatar(i){
+  editAvatars.splice(i,1);refreshAvatarUI();
+}
+async function saveAvatars(){
+  data.avatars=[...editAvatars];
+  await saveData();showToast('アバターを保存しました 🎭');
+}
+
+// ===== UTILS =====
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d=new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function showToast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.borderColor=type==='warn'?'rgba(245,158,11,.5)':'rgba(255,255,255,.1)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ===== INIT =====
+loadData();
+pollTimer=setInterval(loadData,5000);
+</script>
+</body>
+</html>
