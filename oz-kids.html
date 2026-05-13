@@ -458,9 +458,7 @@ async function loadAll(){
   avatarList=data.avatars||AVATARS_DEFAULT;
   const topics=(data.topics||[]).filter(t=>t.active);
   if(!topics.length){
-    document.getElementById('topicText').innerHTML='';
-    document.getElementById('noTopic').style.display='block';
-    document.getElementById('topicText').appendChild(document.getElementById('noTopic'));
+    document.getElementById('topicText').innerHTML='<span style="font-size:14px;color:rgba(100,160,220,.6);text-align:center;display:block">まだお題がないよ！</span>';
     document.getElementById('commentInput').disabled=true;
     document.getElementById('sendBtn').disabled=true;
     buildBubbles([]);
