@@ -254,41 +254,59 @@ body::before{
 <div id="toast"></div>
 
 <script>
+// ===== GAS URL設定 =====
+// ★ GAS URLをここに貼り付けてください（管理画面の「共有設定」で取得）
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAiR7XebOuvUtdfN9NsB-hDUktv0xQBB2UXW70TdYYUhBLUc-eAFhLgSlKLrXhQcSp_w/exec'; // ← ここにGAS URLを貼り付け
+
 // ===== STORAGE HELPERS =====
-// window.storage (Claude artifact storage) を優先し、使えなければ localStorage にフォールバック
 const SHARED = true;
 const PERSONAL = false;
 
 function lsKey(key, shared){ return (shared ? 'oz_shared_' : 'oz_personal_') + key; }
 
 async function sget(key, shared=false){
-  // 1) window.storage を試みる
+  // 1) GAS（共有データのみ）
+  if(shared && GAS_URL){
+    try{
+      const res = await fetch(GAS_URL+'?action=get&key='+encodeURIComponent(key), {method:'GET'});
+      const json = await res.json();
+      if(json.ok) return json.value !== null ? JSON.parse(json.value) : null;
+    } catch(e){ console.warn('[GAS] sget failed, fallback', e); }
+  }
+  // 2) window.storage
   if(window.storage){
     try{
       const r = await window.storage.get(key, shared);
       return r ? JSON.parse(r.value) : null;
     } catch(e){ console.warn('[storage] sget failed, fallback to localStorage', e); }
   }
-  // 2) localStorage フォールバック
+  // 3) localStorage
   try{
     const raw = localStorage.getItem(lsKey(key, shared));
     return raw ? JSON.parse(raw) : null;
-  } catch(e){ console.error('[storage] localStorage sget failed', e); return null; }
+  } catch(e){ console.error('[storage] all failed', e); return null; }
 }
 
 async function sset(key, val, shared=false){
   const json = JSON.stringify(val);
-  // 1) window.storage を試みる
+  // 1) GAS（共有データのみ）
+  if(shared && GAS_URL){
+    try{
+      await fetch(GAS_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'set',key,value:json})});
+      return;
+    } catch(e){ console.warn('[GAS] sset failed, fallback', e); }
+  }
+  // 2) window.storage
   if(window.storage){
     try{
       await window.storage.set(key, json, shared);
-      return; // 成功したらここで終了
-    } catch(e){ console.warn('[storage] sset failed, fallback to localStorage', e); }
+      return;
+    } catch(e){ console.warn('[storage] sset failed, fallback', e); }
   }
-  // 2) localStorage フォールバック
+  // 3) localStorage
   try{
     localStorage.setItem(lsKey(key, shared), json);
-  } catch(e){ console.error('[storage] localStorage sset failed', e); }
+  } catch(e){ console.error('[storage] all failed', e); }
 }
 
 // ===== STARS =====
