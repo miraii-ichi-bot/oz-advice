@@ -150,10 +150,14 @@ textarea.form-input{resize:vertical;min-height:80px}
     <div class="nav-item" onclick="showPage('topics')"><span class="icon">💬</span>お題管理</div>
     <div class="nav-item" onclick="showPage('comments')"><span class="icon">✅</span>コメント承認<span class="badge" id="pendingBadge">0</span></div>
     <div class="nav-item" onclick="showPage('avatars')"><span class="icon">🎭</span>アバター設定</div>
+    <div class="nav-item" onclick="showPage('settings')"><span class="icon">⚙️</span>共有設定</div>
     <div style="margin-top:auto;padding:0 20px">
       <div style="font-size:11px;color:var(--text3);text-align:center;line-height:1.7">
         <span class="live-dot"></span>自動同期中<br>
         <span id="lastSync">--</span>
+      </div>
+      <div id="gasStatus" style="margin-top:8px;font-size:11px;text-align:center;padding:6px 8px;border-radius:6px;background:rgba(239,68,68,.12);color:#ef4444">
+        ⚠️ GAS未設定（ローカル保存中）
       </div>
     </div>
   </aside>
@@ -248,8 +252,71 @@ textarea.form-input{resize:vertical;min-height:80px}
       </div>
     </div>
 
-  </main>
-</div>
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div><div class="page-title">共有設定（Google Apps Script）</div><div class="page-sub">GAS URLを設定すると、管理画面と子どもページのデータが全員で共有されます</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔗 GAS Web App URL</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:16px">
+          下のSTEPに従ってGoogle Apps ScriptのURLを取得し、貼り付けてください。<br>
+          URLを設定すると、管理画面・子どもページ両方のデータがGoogleスプレッドシートで共有されます。
+        </p>
+        <label class="form-label">GAS Web App URL</label>
+        <div class="url-row">
+          <input type="url" id="gasUrlInput" class="form-input" placeholder="https://script.google.com/macros/s/xxxxx/exec">
+          <button class="btn btn-primary" onclick="saveGasUrl()">保存</button>
+        </div>
+        <div id="gasTestResult" style="margin-top:10px;font-size:12px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 GASの設定手順</div>
+        <div style="font-size:13px;color:var(--text2);line-height:2">
+          <div style="margin-bottom:16px">
+            <strong style="color:var(--text)">STEP 1 — Googleスプレッドシートを新規作成</strong><br>
+            <a href="https://sheets.google.com" target="_blank" style="color:var(--cyan)">sheets.google.com</a> を開き、「空白」で新しいシートを作成。名前は「OZデータ」など何でもOK。
+          </div>
+          <div style="margin-bottom:16px">
+            <strong style="color:var(--text)">STEP 2 — Apps Scriptを開く</strong><br>
+            スプレッドシートのメニューから「拡張機能」→「Apps Script」をクリック。
+          </div>
+          <div style="margin-bottom:16px">
+            <strong style="color:var(--text)">STEP 3 — スクリプトを貼り付ける</strong><br>
+            左の「コード.gs」を選択して、中身を全部消して下のコードを貼り付けて保存（Ctrl+S）。
+          </div>
+          <div style="margin-bottom:16px">
+            <strong style="color:var(--text)">STEP 4 — デプロイする</strong><br>
+            右上の「デプロイ」→「新しいデプロイ」→「ウェブアプリ」を選択。<br>
+            「次のユーザーとして実行」→「自分」、「アクセスできるユーザー」→「全員」に設定して「デプロイ」。<br>
+            表示された <strong style="color:var(--cyan)">ウェブアプリのURL</strong> をコピー。
+          </div>
+          <div>
+            <strong style="color:var(--text)">STEP 5 — URLを上の欄に貼り付けて「保存」</strong><br>
+            同じURLを <strong>子どもページ（oz-kids.html）の冒頭</strong> にも貼り付けが必要です（下に説明あり）。
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📄 貼り付けるGASコード（クリックでコピー）</div>
+        <div style="position:relative">
+          <pre id="gasCode" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:11px;line-height:1.7;overflow-x:auto;color:#a8d8a8;white-space:pre-wrap;cursor:pointer" onclick="copyGasCode()" title="クリックでコピー"></pre>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">クリックでコードをコピーできます</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🧒 子どもページへのURL設定方法</div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.8">
+          <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">oz-kids.html</code> をテキストエディタで開き、上の方にある以下の行を探して、GAS URLを貼り付けてください：
+        </p>
+        <pre style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;margin-top:10px;color:#a8d8a8">const GAS_URL = ''; // ← ここにGAS URLを貼り付け</pre>
+        <p style="font-size:13px;color:var(--text2);margin-top:10px;line-height:1.8">
+          変更後は <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">oz-kids.html</code> を GitHub Pages に再アップロードしてください。
+        </p>
+      </div>
+    </div>
+
+
 
 <!-- Confirm delete modal -->
 <div class="modal-bg" id="deleteModal">
@@ -269,25 +336,56 @@ textarea.form-input{resize:vertical;min-height:80px}
 // ===== STORAGE =====
 const SHARED=true,PERSONAL=false;
 
+// ===== GAS URL設定 =====
+// 管理画面の「設定」から入力してもらう or ここに直書きも可
+function getGasUrl(){return localStorage.getItem('oz_gas_url')||'';}
+function setGasUrl(url){localStorage.setItem('oz_gas_url',url);}
+
+// ===== STORAGE（GAS優先 → window.storage → localStorage） =====
 function lsKey(key,shared){return(shared?'oz_shared_':'oz_personal_')+key;}
 
 async function sget(key,shared=false){
+  // 1) GAS（共有データのみ）
+  if(shared){
+    const url=getGasUrl();
+    if(url){
+      try{
+        const res=await fetch(url+'?action=get&key='+encodeURIComponent(key),{method:'GET'});
+        const json=await res.json();
+        if(json.ok) return json.value!==null?JSON.parse(json.value):null;
+      }catch(e){console.warn('[GAS] sget failed',e);}
+    }
+  }
+  // 2) window.storage
   if(window.storage){
     try{const r=await window.storage.get(key,shared);return r?JSON.parse(r.value):null;}
-    catch(e){console.warn('[storage] sget failed, fallback',e);}
+    catch(e){console.warn('[storage] sget failed',e);}
   }
+  // 3) localStorage
   try{const raw=localStorage.getItem(lsKey(key,shared));return raw?JSON.parse(raw):null;}
-  catch(e){console.error('[storage] localStorage sget failed',e);return null;}
+  catch(e){return null;}
 }
 
 async function sset(key,val,shared=false){
   const json=JSON.stringify(val);
+  // 1) GAS（共有データのみ）
+  if(shared){
+    const url=getGasUrl();
+    if(url){
+      try{
+        await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'set',key,value:json})});
+        return;
+      }catch(e){console.warn('[GAS] sset failed, fallback',e);}
+    }
+  }
+  // 2) window.storage
   if(window.storage){
     try{await window.storage.set(key,json,shared);return;}
-    catch(e){console.warn('[storage] sset failed, fallback',e);}
+    catch(e){console.warn('[storage] sset failed',e);}
   }
+  // 3) localStorage
   try{localStorage.setItem(lsKey(key,shared),json);}
-  catch(e){console.error('[storage] localStorage sset failed',e);}
+  catch(e){console.error('[storage] all failed',e);}
 }
 
 // ===== STATE =====
@@ -303,6 +401,7 @@ function showPage(id){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   event.currentTarget.classList.add('active');
+  if(id==='settings') initSettingsPage();
 }
 
 // ===== DATA LOAD/SAVE =====
@@ -538,7 +637,87 @@ function showToast(msg,type='ok'){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
+// ===== GAS SETTINGS =====
+const GAS_CODE = `function doGet(e) {
+  const key = e.parameter.key;
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('store') 
+    || SpreadsheetApp.getActiveSpreadsheet().insertSheet('store');
+  const data = sheet.getDataRange().getValues();
+  for (let row of data) {
+    if (row[0] === key) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ ok: true, value: row[1] || null })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  return ContentService.createTextOutput(
+    JSON.stringify({ ok: true, value: null })
+  ).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const body = JSON.parse(e.postData.contents);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('store')
+    || SpreadsheetApp.getActiveSpreadsheet().insertSheet('store');
+  const data = sheet.getDataRange().getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (data[i][0] === body.key) {
+      sheet.getRange(i + 1, 2).setValue(body.value);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  sheet.appendRow([body.key, body.value]);
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+function initSettingsPage(){
+  const pre=document.getElementById('gasCode');
+  if(pre) pre.textContent=GAS_CODE;
+  const inp=document.getElementById('gasUrlInput');
+  if(inp) inp.value=getGasUrl()||'';
+  updateGasStatus();
+}
+function updateGasStatus(){
+  const url=getGasUrl();
+  const el=document.getElementById('gasStatus');
+  if(!el) return;
+  if(url){
+    el.style.background='rgba(16,185,129,.12)';el.style.color='#10b981';
+    el.textContent='✅ GAS接続済み（共有中）';
+  } else {
+    el.style.background='rgba(239,68,68,.12)';el.style.color='#ef4444';
+    el.textContent='⚠️ GAS未設定（ローカル保存中）';
+  }
+}
+async function saveGasUrl(){
+  const url=document.getElementById('gasUrlInput').value.trim();
+  if(!url){showToast('URLを入力してください','warn');return;}
+  if(!url.startsWith('https://script.google.com')){showToast('Google Apps ScriptのURLを入力してください','warn');return;}
+  const res=document.getElementById('gasTestResult');
+  res.textContent='🔄 接続テスト中...';res.style.color='var(--text2)';
+  try{
+    const r=await fetch(url+'?action=get&key=oz_ping',{method:'GET'});
+    const j=await r.json();
+    if(j.ok!==undefined){
+      setGasUrl(url);
+      updateGasStatus();
+      res.textContent='✅ 接続成功！URLを保存しました。';res.style.color='#10b981';
+      showToast('GAS URLを保存しました ✅');
+    } else throw new Error('invalid response');
+  } catch(e){
+    res.textContent='❌ 接続に失敗しました。URLを確認してください。';res.style.color='#ef4444';
+  }
+}
+function copyGasCode(){
+  navigator.clipboard.writeText(GAS_CODE).then(()=>showToast('コードをコピーしました 📋')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=GAS_CODE;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('コードをコピーしました 📋');
+  });
+}
+
 // ===== INIT =====
+updateGasStatus();
 loadData();
 pollTimer=setInterval(loadData,5000);
 </script>
