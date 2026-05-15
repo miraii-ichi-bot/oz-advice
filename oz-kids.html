@@ -256,7 +256,7 @@ body::before{
 <script>
 // ===== GAS URL設定 =====
 // ★ GAS URLをここに貼り付けてください（管理画面の「共有設定」で取得）
-const GAS_URL = ''; // ← ここにGAS URLを貼り付け
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAiR7XebOuvUtdfN9NsB-hDUktv0xQBB2UXW70TdYYUhBLUc-eAFhLgSlKLrXhQcSp_w/exec'; // ← ここにGAS URLを貼り付け
 
 // ===== STORAGE HELPERS =====
 const SHARED = true;
@@ -573,7 +573,9 @@ async function submitComment(){
 }
 
 // ===== AVATAR =====
-function openAvatarModal(){
+async function openAvatarModal(){
+  const latest=await sget('oz_data',SHARED);
+  if(latest&&latest.avatars&&latest.avatars.length) avatarList=latest.avatars;
   buildAvatarGrid();
   document.getElementById('avatarModal').classList.add('open');
 }
