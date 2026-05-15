@@ -337,8 +337,8 @@ textarea.form-input{resize:vertical;min-height:80px}
 const SHARED=true,PERSONAL=false;
 
 // ===== GAS URL設定 =====
-// 管理画面の「設定」から入力してもらう or ここに直書きも可
-function getGasUrl(){return localStorage.getItem('oz_gas_url')||'';}
+const GAS_URL_DEFAULT='https://script.google.com/macros/s/AKfycbwAiR7XebOuvUtdfN9NsB-hDUktv0xQBB2UXW70TdYYUhBLUc-eAFhLgSlKLrXhQcSp_w/exec';
+function getGasUrl(){return localStorage.getItem('oz_gas_url')||GAS_URL_DEFAULT;}
 function setGasUrl(url){localStorage.setItem('oz_gas_url',url);}
 
 // ===== STORAGE（GAS優先 → window.storage → localStorage） =====
