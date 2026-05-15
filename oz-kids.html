@@ -256,7 +256,7 @@ body::before{
 <script>
 // ===== GAS URL設定 =====
 // ★ GAS URLをここに貼り付けてください（管理画面の「共有設定」で取得）
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwAiR7XebOuvUtdfN9NsB-hDUktv0xQBB2UXW70TdYYUhBLUc-eAFhLgSlKLrXhQcSp_w/exec'; // ← ここにGAS URLを貼り付け
+const GAS_URL = ''; // ← ここにGAS URLを貼り付け
 
 // ===== STORAGE HELPERS =====
 const SHARED = true;
@@ -358,6 +358,15 @@ class Bubble{
     this.padding={x:14,y:10};
     this.fontSize=13;
     this.avatarSize=28;
+    // 画像URLの場合はプリロード
+    if(this.avatar&&(this.avatar.startsWith('http')||this.avatar.startsWith('/'))){
+      if(!Bubble.imgCache[this.avatar]){
+        const img=new Image();
+        img.crossOrigin='anonymous';
+        img.src=this.avatar;
+        Bubble.imgCache[this.avatar]=img;
+      }
+    }
   }
   update(t){
     this.alpha+=(this.targetAlpha-this.alpha)*.04;
@@ -410,10 +419,24 @@ class Bubble{
     ctx.lineTo(this.x+6,y+this.h);
     ctx.stroke();
     // avatar
-    const ax=this.x,ay=y+this.padding.y+this.avatarSize/2;
-    ctx.font=`${this.avatarSize}px serif`;
-    ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(this.avatar,ax,ay+this.avatarSize/2+textH+4);
+    const ax=this.x;
+    const avatarY=y+this.padding.y+textH+4;
+    const isUrl=this.avatar&&(this.avatar.startsWith('http')||this.avatar.startsWith('/'));
+    if(isUrl){
+      const img=Bubble.imgCache[this.avatar];
+      if(img&&img.complete&&img.naturalWidth){
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ax,avatarY+this.avatarSize/2,this.avatarSize/2,0,Math.PI*2);
+        ctx.clip();
+        ctx.drawImage(img,ax-this.avatarSize/2,avatarY,this.avatarSize,this.avatarSize);
+        ctx.restore();
+      }
+    } else {
+      ctx.font=`${this.avatarSize}px serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(this.avatar,ax,avatarY+this.avatarSize/2);
+    }
     // text
     ctx.font=`${this.fontSize}px 'Zen Maru Gothic',sans-serif`;
     ctx.fillStyle='#eef4ff';ctx.textAlign='center';ctx.textBaseline='top';
@@ -421,6 +444,8 @@ class Bubble{
     ctx.restore();
   }
 }
+
+Bubble.imgCache={};
 
 function roundRect(c,x,y,w,h,r){
   c.beginPath();c.moveTo(x+r,y);
