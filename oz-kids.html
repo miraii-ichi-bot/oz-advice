@@ -172,9 +172,63 @@ body::before{
   border-radius:12px;background:rgba(10,22,40,.8);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   backdrop-filter:blur(8px);font-size:24px;
-  transition:border-color .2s;
+  transition:border-color .2s;overflow:hidden;
 }
 #myAvatarBtn:hover{border-color:rgba(0,212,255,.7)}
+#myAvatarBtn img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+
+/* === HELP BUTTON === */
+#helpBtn{
+  position:fixed;top:20px;left:72px;z-index:50;
+  width:44px;height:44px;border:1px solid rgba(0,212,255,.3);
+  border-radius:12px;background:rgba(10,22,40,.8);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);font-size:20px;color:var(--oz-cyan);font-weight:700;
+  transition:border-color .2s;
+}
+#helpBtn:hover{border-color:rgba(0,212,255,.7)}
+
+/* === LOADING OVERLAY === */
+#loadingOverlay{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(4,8,15,.75);backdrop-filter:blur(6px);
+  flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+#loadingOverlay.show{display:flex}
+.spinner{
+  width:52px;height:52px;border-radius:50%;
+  border:3px solid rgba(0,212,255,.2);
+  border-top-color:var(--oz-cyan);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:15px;color:var(--oz-cyan);letter-spacing:2px}
+
+/* === HELP MODAL === */
+#helpModal{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(4,8,15,.8);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;
+}
+#helpModal.open{display:flex}
+.help-box{
+  background:rgba(10,22,40,.97);border:1px solid rgba(0,212,255,.3);
+  border-radius:24px;padding:32px 28px;max-width:380px;width:92%;
+  animation:fadeUp .4s both;position:relative;
+}
+.help-title{font-size:18px;font-weight:900;text-align:center;color:var(--oz-cyan);margin-bottom:20px}
+.help-section{margin-bottom:16px;line-height:1.9;font-size:14px}
+.help-section .label{font-size:11px;letter-spacing:2px;color:var(--oz-muted);text-transform:uppercase;margin-bottom:6px}
+.help-rule{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:13px;color:rgba(238,244,255,.8)}
+.help-rule::before{content:"✖";color:var(--oz-pink);flex-shrink:0;margin-top:2px}
+.help-close{
+  display:block;margin:20px auto 0;padding:10px 32px;
+  border:none;border-radius:99px;cursor:pointer;
+  background:linear-gradient(135deg,var(--oz-blue),var(--oz-cyan));
+  color:#fff;font-family:'Zen Maru Gothic',sans-serif;font-size:15px;font-weight:700;
+}
+ruby{ruby-align:center}
+rt{font-size:0.55em;color:var(--oz-muted)}
 
 /* === TOAST === */
 #toast{
@@ -208,7 +262,39 @@ body::before{
 <canvas id="bubbleCanvas"></canvas>
 
 <!-- My avatar btn -->
-<button id="myAvatarBtn" onclick="openAvatarModal()" title="アバターを変える">🌟</button>
+<button id="myAvatarBtn" onclick="openAvatarModal()" title="アバターをかえる">🌟</button>
+
+<!-- Help btn -->
+<button id="helpBtn" onclick="openHelp()" title="つかいかた">？</button>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">そうしんちゅう…</div>
+</div>
+
+<!-- Help modal -->
+<div id="helpModal">
+  <div class="help-box">
+    <div class="help-title">⭐ つかいかた</div>
+    <div class="help-section">
+      <p>
+        <ruby>今日<rt>きょう</rt></ruby>の<ruby>お題<rt>おだい</rt></ruby>に、みんなの<ruby>アドバイス<rt>あどばいす</rt></ruby>を<ruby>送<rt>おく</rt></ruby>ろう！<br>
+        <ruby>送<rt>おく</rt></ruby>ってくれた<ruby>メッセージ<rt>めっせーじ</rt></ruby>は、<ruby>星<rt>ほし</rt></ruby>の<ruby>住人<rt>じゅうにん</rt></ruby>が<ruby>確認<rt>かくにん</rt></ruby>して、みんなに<ruby>見<rt>み</rt></ruby>せてもＯＫなら、<ruby>画面<rt>がめん</rt></ruby>にふわふわうかぶよ！
+      </p>
+    </div>
+    <div class="help-section">
+      <div class="label">❌ <ruby>送<rt>おく</rt></ruby>らないでね</div>
+      <div class="help-rule"><ruby>他<rt>ほか</rt></ruby>の<ruby>人<rt>ひと</rt></ruby>がみてイヤな<ruby>気持<rt>きも</rt></ruby>ちになること</div>
+      <div class="help-rule"><ruby>住所<rt>じゅうしょ</rt></ruby>・<ruby>名前<rt>なまえ</rt></ruby>など、キミのことがわかるようなこと</div>
+      <div class="help-rule"><ruby>友達<rt>ともだち</rt></ruby>の<ruby>悪口<rt>わるくち</rt></ruby>や、だれかをきずつけることば</div>
+    </div>
+    <p style="font-size:13px;text-align:center;color:rgba(238,244,255,.6);margin-top:4px">
+      みんなが<ruby>楽<rt>たの</rt></ruby>しくなるアドバイスをまってるよ！🌟
+    </p>
+    <button class="help-close" onclick="closeHelp()">わかった！</button>
+  </div>
+</div>
 
 <!-- Menu -->
 <button id="menuBtn" onclick="toggleMenu()">
@@ -478,7 +564,8 @@ animate();
 let pollTimer=null;
 let lastHash='';
 
-async function loadAll(){
+async function loadAll(keepTopic=false){
+  if(keepTopic) viewingPastTopic=true;
   const data=await sget('oz_data',SHARED)||{topics:[],comments:[],avatars:null};
   avatarList=data.avatars||AVATARS_DEFAULT;
   const topics=(data.topics||[]).filter(t=>t.active);
@@ -492,11 +579,13 @@ async function loadAll(){
   }
   document.getElementById('commentInput').disabled=false;
   document.getElementById('sendBtn').disabled=false;
-  // newest active topic
+  // newest active topic（過去お題閲覧中は上書きしない）
   const topic=topics[topics.length-1];
-  if(topic.id!==currentTopicId){
-    currentTopicId=topic.id;
-    animateTopicIn(topic.text);
+  if(!viewingPastTopic){
+    if(topic.id!==currentTopicId){
+      currentTopicId=topic.id;
+      animateTopicIn(topic.text);
+    }
   }
   renderPastMenu(data.topics||[]);
   // approved comments for this topic
@@ -542,11 +631,14 @@ function renderPastMenu(topics){
   });
 }
 
+let viewingPastTopic=false;
 function showPastTopic(t){
-  animateTopicIn(t.text);
+  viewingPastTopic=true;
   currentTopicId=t.id;
+  animateTopicIn(t.text);
   toggleMenu();
-  loadAll();
+  // 過去お題のコメントを再描画
+  loadAll(true);
 }
 
 // ===== COMMENT SUBMIT =====
@@ -554,22 +646,34 @@ async function submitComment(){
   const inp=document.getElementById('commentInput');
   const text=inp.value.trim();
   if(!text||!currentTopicId) return;
+  // ローディング表示
   document.getElementById('sendBtn').disabled=true;
-  const stored=await sget('oz_data',SHARED)||{topics:[],comments:[],avatars:null};
-  const comment={
-    id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2),
-    topicId:currentTopicId,
-    text,
-    avatar:myAvatar,
-    approved:false,
-    createdAt:new Date().toISOString()
-  };
-  stored.comments=[...(stored.comments||[]),comment];
-  await sset('oz_data',stored,SHARED);
-  inp.value='';
-  document.getElementById('charCount').textContent='0';
-  document.getElementById('sendBtn').disabled=false;
-  showToast('アドバイスを送ったよ！承認されたら表示されるよ✨');
+  document.getElementById('commentInput').disabled=true;
+  document.getElementById('loadingOverlay').classList.add('show');
+  try{
+    const stored=await sget('oz_data',SHARED)||{topics:[],comments:[],avatars:null};
+    const comment={
+      id:'c_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      topicId:currentTopicId,
+      text,
+      avatar:myAvatar,
+      approved:false,
+      createdAt:new Date().toISOString()
+    };
+    stored.comments=[...(stored.comments||[]),comment];
+    await sset('oz_data',stored,SHARED);
+    inp.value='';
+    document.getElementById('charCount').textContent='0';
+    // 完了表示
+    document.getElementById('loadingOverlay').classList.remove('show');
+    showToast('そうしんできたよ✨ しょうにんされたらひょうじされるよ！');
+  }catch(e){
+    document.getElementById('loadingOverlay').classList.remove('show');
+    showToast('エラーがおきたよ。もういちどためしてね！');
+  }finally{
+    document.getElementById('sendBtn').disabled=false;
+    document.getElementById('commentInput').disabled=false;
+  }
 }
 
 // ===== AVATAR =====
@@ -606,11 +710,25 @@ function buildAvatarGrid(){
 }
 function confirmAvatarChoice(){
   myAvatar=pendingAvatar;
-  document.getElementById('myAvatarBtn').textContent=myAvatar.startsWith('http')?'🎭':myAvatar;
+  updateAvatarBtn();
   sset('oz_myavatar',myAvatar,PERSONAL);
   document.getElementById('avatarModal').classList.remove('open');
-  showToast('アバターを設定したよ！');
+  showToast('アバターをせっていしたよ！');
 }
+function updateAvatarBtn(){
+  const btn=document.getElementById('myAvatarBtn');
+  const isUrl=myAvatar&&(myAvatar.startsWith('http')||myAvatar.startsWith('/'));
+  if(isUrl){
+    btn.innerHTML=`<img src="${myAvatar}" alt="avatar">`;
+  } else {
+    btn.innerHTML=myAvatar||'🌟';
+    btn.style.fontSize='24px';
+  }
+}
+
+// ===== HELP =====
+function openHelp(){document.getElementById('helpModal').classList.add('open');}
+function closeHelp(){document.getElementById('helpModal').classList.remove('open');}
 
 // ===== MENU =====
 function toggleMenu(){
@@ -637,7 +755,7 @@ function showToast(msg){
 async function init(){
   const savedAv=await sget('oz_myavatar',PERSONAL);
   if(savedAv) myAvatar=savedAv;
-  document.getElementById('myAvatarBtn').textContent=myAvatar.startsWith('http')?'🎭':myAvatar;
+  updateAvatarBtn();
   await loadAll();
   pollTimer=setInterval(loadAll,5000);
 }
