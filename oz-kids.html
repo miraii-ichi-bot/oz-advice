@@ -738,7 +738,11 @@ function updateAvatarBtn(){
 // ===== HELP =====
 function openHelp(){
   const m=document.getElementById('helpModal');
-  m.style.display='block';
+  const box=document.querySelector('.help-box');
+  m.style.cssText='display:block;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(4,8,15,.85);';
+  if(box){
+    box.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,22,40,.97);border:1px solid rgba(0,212,255,.3);border-radius:24px;padding:32px 28px;width:360px;max-width:90vw;z-index:10000;box-sizing:border-box;';
+  }
 }
 function closeHelp(){
   const m=document.getElementById('helpModal');
