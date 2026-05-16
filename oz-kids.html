@@ -562,39 +562,57 @@ async function loadAll(keepTopic=false){
   if(keepTopic) viewingPastTopic=true;
   const data=await sget('oz_data',SHARED)||{topics:[],comments:[],avatars:null};
   avatarList=data.avatars||AVATARS_DEFAULT;
-  const topics=(data.topics||[]).filter(t=>t.active);
-  if(!topics.length){
+  const allTopics=data.topics||[];
+  const activeTopics=allTopics.filter(t=>t.active);
+
+  // 過去お題閲覧中でなく、アクティブお題がない場合
+  if(!activeTopics.length && !viewingPastTopic){
     document.getElementById('topicText').innerHTML='<span style="font-size:14px;color:rgba(100,160,220,.6);text-align:center;display:block">まだお題がないよ！</span>';
     document.getElementById('commentInput').disabled=true;
     document.getElementById('sendBtn').disabled=true;
     buildBubbles([]);
-    renderPastMenu(data.topics||[]);
+    renderPastMenu(allTopics);
     return;
   }
-  document.getElementById('commentInput').disabled=false;
-  document.getElementById('sendBtn').disabled=false;
-  // newest active topic（過去お題閲覧中は上書きしない）
-  const topic=topics[topics.length-1];
-  if(!viewingPastTopic){
+
+  // 過去お題閲覧中でなければ最新アクティブお題をセット
+  if(!viewingPastTopic && activeTopics.length){
+    const topic=activeTopics[activeTopics.length-1];
     if(topic.id!==currentTopicId){
       currentTopicId=topic.id;
       animateTopicIn(topic.text);
     }
   }
-  renderPastMenu(data.topics||[]);
-  // approved comments for this topic
-  const approved=(data.comments||[]).filter(c=>c.topicId===currentTopicId&&c.approved);
-  const h=JSON.stringify(approved);
-  if(h!==lastHash){lastHash=h;buildBubbles(approved);}
-  allComments=approved;
-  document.getElementById('countNum').textContent=approved.length;
-  if(approved.length>0) document.getElementById('countBadge').classList.add('visible');
+
+  // 過去お題閲覧中で、currentTopicIdが未セットの場合は最新アクティブをセット
+  if(viewingPastTopic && !currentTopicId && activeTopics.length){
+    const topic=activeTopics[activeTopics.length-1];
+    currentTopicId=topic.id;
+    animateTopicIn(topic.text);
+  }
+
+  // お題テキストを表示（過去お題閲覧中はすでにshowPastTopicで設定済み）
+  document.getElementById('commentInput').disabled=false;
+  document.getElementById('sendBtn').disabled=false;
+
+  renderPastMenu(allTopics);
+
+  // currentTopicIdに対応するコメントのみ表示（過去お題でも現在お題でも正確に絞り込む）
+  if(currentTopicId){
+    const approved=(data.comments||[]).filter(c=>c.topicId===currentTopicId&&c.approved);
+    const h=JSON.stringify(approved);
+    if(h!==lastHash){lastHash=h;buildBubbles(approved);}
+    allComments=approved;
+    document.getElementById('countNum').textContent=approved.length;
+    if(approved.length>0) document.getElementById('countBadge').classList.add('visible');
+  }
 }
 
 function animateTopicIn(text){
   const el=document.getElementById('topicText');
   el.style.opacity='0';
-  document.getElementById('noTopic').style.display='none';
+  const noTopic=document.getElementById('noTopic');
+  if(noTopic) noTopic.style.display='none';
   setTimeout(()=>{el.textContent=text;el.style.transition='opacity .6s';el.style.opacity='1';},300);
 }
 
@@ -629,9 +647,10 @@ let viewingPastTopic=false;
 function showPastTopic(t){
   viewingPastTopic=true;
   currentTopicId=t.id;
+  lastHash=''; // コメントキャッシュをリセットして必ず再描画
   animateTopicIn(t.text);
   toggleMenu();
-  // 過去お題のコメントを再描画
+  // 過去お題のコメントを再描画（currentTopicIdが設定済みなのでそのまま呼ぶ）
   loadAll(true);
 }
 
