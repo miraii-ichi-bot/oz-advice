@@ -647,11 +647,29 @@ let viewingPastTopic=false;
 function showPastTopic(t){
   viewingPastTopic=true;
   currentTopicId=t.id;
-  lastHash=''; // コメントキャッシュをリセットして必ず再描画
-  animateTopicIn(t.text);
-  toggleMenu();
-  // 過去お題のコメントを再描画（currentTopicIdが設定済みなのでそのまま呼ぶ）
-  loadAll(true);
+  lastHash=''; // コメントキャッシュをリセット
+  toggleMenu(); // メニューを先に閉じる
+  // メニューのアニメーション後にお題とコメントを更新
+  setTimeout(async ()=>{
+    // お題テキストを確実に表示
+    const el=document.getElementById('topicText');
+    el.style.transition='none';
+    el.style.opacity='0';
+    const noTopic=document.getElementById('noTopic');
+    if(noTopic) noTopic.style.display='none';
+    el.textContent=t.text;
+    requestAnimationFrame(()=>{
+      el.style.transition='opacity .6s';
+      el.style.opacity='1';
+    });
+    // currentTopicIdに対応するコメントをGASから取得して表示
+    const data=await sget('oz_data',SHARED)||{topics:[],comments:[],avatars:null};
+    const approved=(data.comments||[]).filter(c=>c.topicId===currentTopicId&&c.approved);
+    buildBubbles(approved);
+    document.getElementById('countNum').textContent=approved.length;
+    if(approved.length>0) document.getElementById('countBadge').classList.add('visible');
+    renderPastMenu(data.topics||[]);
+  }, 350);
 }
 
 // ===== COMMENT SUBMIT =====
